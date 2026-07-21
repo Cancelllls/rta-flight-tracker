@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair } from 'lucide-react';
+import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair, ArrowUp, ArrowDown, Radio } from 'lucide-react';
 
 const planeSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}">
@@ -26,6 +26,10 @@ interface Flight {
   velocity: number;
   true_track: number;
   squawk: string;
+  vertical_rate: number;
+  on_ground: boolean;
+  geo_altitude: number;
+  position_source: number;
 }
 
 interface FlightData {
@@ -314,36 +318,78 @@ function App() {
                    </p>
                  </div>
                )}
-
-               <div className="space-y-4">
-                 <div className="bg-[#111] border border-[#222] rounded-2xl p-3 flex justify-between items-center">
-                   <div className="flex items-center gap-2">
-                     <Gauge size={14} className="text-blue-500" />
-                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Velocity</span>
+               <div className="grid grid-cols-2 gap-3">
+                 <div className="bg-[#111] border border-[#222] rounded-xl p-3 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                   <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                     <Gauge size={12} className="text-blue-500" />
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Velocity</span>
                    </div>
                    <span className="font-mono font-bold text-blue-100">{Math.round(selectedFlight.velocity * 3.6)} km/h</span>
                  </div>
 
-                 <div className="bg-[#111] border border-[#222] rounded-2xl p-3 flex justify-between items-center">
-                   <div className="flex items-center gap-2">
-                     <Mountain size={14} className="text-purple-500" />
-                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Altitude</span>
+                 <div className="bg-[#111] border border-[#222] rounded-xl p-3 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                   <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                     <Mountain size={12} className="text-purple-500" />
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Baro Alt</span>
                    </div>
                    <span className="font-mono font-bold text-purple-100">{Math.round(selectedFlight.altitude)} m</span>
                  </div>
 
-                 <div className="bg-[#111] border border-[#222] rounded-2xl p-3 flex justify-between items-center">
-                   <div className="flex items-center gap-2">
-                     <Navigation size={14} className="text-blue-400" />
-                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Track</span>
+                 <div className="bg-[#111] border border-[#222] rounded-xl p-3 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                   <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                     <Navigation size={12} className="text-indigo-400" />
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Track</span>
                    </div>
-                   <span className="font-mono font-bold text-blue-100">{Math.round(selectedFlight.true_track)}°</span>
+                   <span className="font-mono font-bold text-indigo-100">{Math.round(selectedFlight.true_track)}°</span>
                  </div>
 
-                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#222]">
+                 <div className="bg-[#111] border border-[#222] rounded-xl p-3 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                   <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                     {selectedFlight.vertical_rate > 0 ? (
+                       <ArrowUp size={12} className="text-green-500" />
+                     ) : selectedFlight.vertical_rate < 0 ? (
+                       <ArrowDown size={12} className="text-orange-500" />
+                     ) : (
+                       <Activity size={12} className="text-gray-500" />
+                     )}
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vert Rate</span>
+                   </div>
+                   <span className="font-mono font-bold text-gray-200">{selectedFlight.vertical_rate.toFixed(1)} m/s</span>
+                 </div>
+
+                 <div className="bg-[#111] border border-[#222] rounded-xl p-3 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                   <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                     <Crosshair size={12} className="text-teal-500" />
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Geo Alt</span>
+                   </div>
+                   <span className="font-mono font-bold text-teal-100">{Math.round(selectedFlight.geo_altitude)} m</span>
+                 </div>
+
+                 <div className="bg-[#111] border border-[#222] rounded-xl p-3 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                   <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                     <Radio size={12} className="text-yellow-500" />
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Radar</span>
+                   </div>
+                   <span className="font-mono font-bold text-yellow-100 text-[11px]">
+                     {selectedFlight.position_source === 0 ? "ADS-B" : 
+                      selectedFlight.position_source === 1 ? "ASTERIX" :
+                      selectedFlight.position_source === 2 ? "MLAT" :
+                      selectedFlight.position_source === 3 ? "FLARM" : "UAT"}
+                   </span>
+                 </div>
+               </div>
+
+               {selectedFlight.on_ground && (
+                 <div className="mt-3 bg-amber-950/40 border border-amber-900/50 p-2 rounded-xl text-center">
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Aircraft on Ground (Taxi)</span>
+                 </div>
+               )}
+
+               <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#222]">
+                  <div className="flex items-center gap-2">
                     <Crosshair size={14} className="text-gray-500" />
                     <span className="font-mono text-xs text-gray-500">HEX: {selectedFlight.icao24.toUpperCase()}</span>
-                 </div>
+                  </div>  </div>
                </div>
              </div>
           </div>

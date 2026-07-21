@@ -93,8 +93,12 @@ def init_mock_flights():
             "longitude": random.uniform(-180, 180),
             "latitude": random.uniform(-80, 80),
             "altitude": random.uniform(5000, 13000),
+            "geo_altitude": random.uniform(5200, 13200),
             "velocity": random.uniform(200, 280), # m/s
             "true_track": random.uniform(0, 360),
+            "vertical_rate": random.uniform(-15, 15),
+            "on_ground": False,
+            "position_source": 0,
             "squawk": "1200" if random.random() > 0.005 else random.choice(["7700", "7600", "7500"])
         })
 
@@ -115,8 +119,12 @@ def update_mock_flights():
             "longitude": random.uniform(-180, 180),
             "latitude": random.uniform(-80, 80),
             "altitude": random.uniform(5000, 13500), # Altitude naturally fluctuates
+            "geo_altitude": random.uniform(5200, 13700),
             "velocity": random.uniform(200, 295), # Up to 1062 km/h
             "true_track": random.uniform(0, 360),
+            "vertical_rate": random.uniform(-15, 15),
+            "on_ground": False,
+            "position_source": 0,
             "squawk": "1200" if random.random() > 0.005 else random.choice(["7700", "7600", "7500"])
         })
         
@@ -170,9 +178,13 @@ async def fetch_flight_data():
                                         "longitude": s[5],
                                         "latitude": s[6],
                                         "altitude": s[7] or 0,
+                                        "on_ground": s[8] if len(s) > 8 and s[8] is not None else False,
                                         "velocity": s[9] or 0,
                                         "true_track": s[10] or 0,
-                                        "squawk": str(s[14]) if s[14] is not None else ""
+                                        "vertical_rate": s[11] or 0,
+                                        "geo_altitude": s[13] if len(s) > 13 and s[13] is not None else (s[7] or 0),
+                                        "squawk": str(s[14]) if len(s) > 14 and s[14] is not None else "",
+                                        "position_source": s[16] if len(s) > 16 and s[16] is not None else 0
                                     }
                                     processed.append(flight_data)
                         else:
