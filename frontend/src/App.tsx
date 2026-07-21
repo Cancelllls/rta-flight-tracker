@@ -5,12 +5,12 @@ import 'leaflet/dist/leaflet.css';
 import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair } from 'lucide-react';
 
 const planeSvg = (color: string) => `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" stroke="none">
-  <path d="M17.8 19.2L16 11l4-4c.8-.8.8-2.2 0-3s-2.2-.8-3 0l-4 4-8.2-1.8c-.8-.2-1.5.4-1.5 1.2v.6c0 .5.3.9.7 1l5.3 1.5-2.5 2.5-2.7-.7c-.4-.1-.8.1-1 .4l-.4.4c-.2.2-.2.5 0 .7l2.8 1.4 1.4 2.8c.2.2.5.2.7 0l.4-.4c.3-.2.5-.6.4-1l-.7-2.7 2.5-2.5 1.5 5.3c.1.4.5.7 1 .7h.6c.8 0 1.4-.7 1.2-1.5z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}">
+  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
 </svg>`;
 
 const createIcon = (color: string, track: number, scale: number = 1) => L.divIcon({
-  html: `<div style="transform: rotate(${track + 45}deg) scale(${scale}); width: 24px; height: 24px; transition: transform 0.3s ease;">${planeSvg(color)}</div>`,
+  html: `<div style="transform: rotate(${track}deg) scale(${scale}); width: 24px; height: 24px; transition: transform 0.3s ease;">${planeSvg(color)}</div>`,
   className: '',
   iconSize: [24, 24],
   iconAnchor: [12, 12],
@@ -90,7 +90,7 @@ function App() {
         <div className="p-6 border-b border-slate-800/50">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-black bg-gradient-to-br from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent uppercase tracking-tight">
-              Nexus<span className="font-light text-slate-400 text-lg">RTA</span>
+              C.<span className="font-light text-slate-400 text-lg ml-1">Real Time Flight View</span>
             </h1>
             <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest ${connected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
               <Activity size={12} className={connected ? "animate-pulse" : ""} />
