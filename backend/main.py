@@ -77,9 +77,20 @@ async def fetch_flight_data():
                         # Detect anomalies
                         emergencies = [f for f in processed if f["squawk"] in ["7700", "7600", "7500"]]
                         
+                        # Calculate highest altitude and fastest flight
+                        valid_altitudes = [f for f in processed if f["altitude"] is not None]
+                        valid_velocities = [f for f in processed if f["velocity"] is not None]
+                        
+                        highest_flight = max(valid_altitudes, key=lambda x: x["altitude"]) if valid_altitudes else None
+                        fastest_flight = max(valid_velocities, key=lambda x: x["velocity"]) if valid_velocities else None
+                        
                         payload = {
                             "total_flights": len(processed),
                             "emergencies": emergencies,
+                            "stats": {
+                                "highest": highest_flight,
+                                "fastest": fastest_flight
+                            },
                             "flights": processed
                         }
                         

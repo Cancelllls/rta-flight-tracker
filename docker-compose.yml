@@ -8,18 +8,28 @@ services:
     restart: unless-stopped
     expose:
       - "9876"
+    networks:
+      - coolify
 
   rta-frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
+    expose:
       - "80"
     depends_on:
       - rta-backend
+    networks:
+      - coolify
     labels:
       - "traefik.enable=true"
-      # The domain is handled by Coolify dynamically when deploying via compose if configured via UI,
-      # but adding these labels ensures Traefik handles routing cleanly if we run it directly.
-      # Coolify usually auto-generates Traefik labels based on the project settings.
+      - "traefik.http.routers.rta-flight.rule=Host(`rta.cancellls.com`)"
+      - "traefik.http.routers.rta-flight.entrypoints=http,https"
+      - "traefik.http.routers.rta-flight.tls.certresolver=letsencrypt"
+      - "traefik.http.services.rta-flight.loadbalancer.server.port=80"
+      - "traefik.docker.network=coolify"
+
+networks:
+  coolify:
+    external: true
