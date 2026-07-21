@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair, ArrowUp, ArrowDown, Radio } from 'lucide-react';
+import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair, ArrowUp, ArrowDown, Radio, BarChart3, Globe, Radar, Briefcase } from 'lucide-react';
 
 const planeSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}">
@@ -39,6 +39,20 @@ interface FlightData {
   stats: {
     highest: Flight | null;
     fastest: Flight | null;
+    phases: {
+      climbing: number;
+      descending: number;
+      cruising: number;
+      ground: number;
+    };
+    top_countries: { country: string; count: number }[];
+    radar_networks: {
+      adsb: number;
+      asterix: number;
+      mlat: number;
+      flarm: number;
+    };
+    top_airlines: { airline: string; count: number }[];
   };
   flights: Flight[];
 }
@@ -57,7 +71,14 @@ function App() {
   const [data, setData] = useState<FlightData>({ 
     total_flights: 0, 
     emergencies: [], 
-    stats: { highest: null, fastest: null }, 
+    stats: { 
+      highest: null, 
+      fastest: null,
+      phases: { climbing: 0, descending: 0, cruising: 0, ground: 0 },
+      top_countries: [],
+      radar_networks: { adsb: 0, asterix: 0, mlat: 0, flarm: 0 },
+      top_airlines: []
+    }, 
     flights: [] 
   });
   const [connected, setConnected] = useState(false);
@@ -173,6 +194,108 @@ function App() {
             </div>
           </div>
           
+          {/* Global Fleet Breakdown */}
+          <div className="bg-[#111] border border-[#222] p-5 rounded-3xl relative shadow-lg">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 size={16} className="text-blue-500" />
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                Fleet Status Breakdown
+              </h3>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1.5"><ArrowUp size={12} className="text-green-500"/> Climbing</span>
+                <span className="font-mono text-sm font-bold text-gray-200">{data.stats.phases?.climbing.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1.5"><Activity size={12} className="text-blue-500"/> Cruising</span>
+                <span className="font-mono text-sm font-bold text-gray-200">{data.stats.phases?.cruising.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1.5"><ArrowDown size={12} className="text-orange-500"/> Descending</span>
+                <span className="font-mono text-sm font-bold text-gray-200">{data.stats.phases?.descending.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1.5"><Plane size={12} className="text-amber-500"/> On Ground</span>
+                <span className="font-mono text-sm font-bold text-gray-200">{data.stats.phases?.ground.toLocaleString() || 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Top Origin Countries */}
+          {data.stats.top_countries?.length > 0 && (
+            <div className="bg-[#111] border border-[#222] p-5 rounded-3xl relative shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Globe size={16} className="text-purple-500" />
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                  Top Origin Territories
+                </h3>
+              </div>
+              
+              <div className="space-y-2">
+                {data.stats.top_countries.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center group">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="text-[10px] font-mono text-gray-600 font-bold">{idx + 1}.</span>
+                      <span className="text-xs font-bold text-gray-300 truncate">{item.country}</span>
+                    </div>
+                    <span className="font-mono text-[11px] font-bold text-purple-400 shrink-0 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">{item.count.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Active Radar Networks */}
+          <div className="bg-[#111] border border-[#222] p-5 rounded-3xl relative shadow-lg">
+            <div className="flex items-center gap-2 mb-4">
+              <Radar size={16} className="text-teal-500" />
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                Active Sensor Networks
+              </h3>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">ADS-B Transponders</span>
+                <span className="font-mono text-sm font-bold text-teal-300">{data.stats.radar_networks?.adsb.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">MLAT (Multilateration)</span>
+                <span className="font-mono text-sm font-bold text-cyan-300">{data.stats.radar_networks?.mlat.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0a0a0a] border border-[#222] px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">ASTERIX Radar</span>
+                <span className="font-mono text-sm font-bold text-indigo-300">{data.stats.radar_networks?.asterix.toLocaleString() || 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Top Airline Operators */}
+          {data.stats.top_airlines?.length > 0 && (
+            <div className="bg-[#111] border border-[#222] p-5 rounded-3xl relative shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Briefcase size={16} className="text-amber-500" />
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                  Top Airline Operators
+                </h3>
+              </div>
+              
+              <div className="space-y-2">
+                {data.stats.top_airlines.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center group">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="text-[10px] font-mono text-gray-600 font-bold">{idx + 1}.</span>
+                      <span className="text-xs font-bold text-gray-300 truncate uppercase">{item.airline}</span>
+                    </div>
+                    <span className="font-mono text-[11px] font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{item.count.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Emergencies */}
           <div className="relative">
             {data.emergencies.length > 0 && <div className="absolute -inset-1 bg-red-500/20 blur-xl rounded-full"></div>}
@@ -389,12 +512,11 @@ function App() {
                   <div className="flex items-center gap-2">
                     <Crosshair size={14} className="text-gray-500" />
                     <span className="font-mono text-xs text-gray-500">HEX: {selectedFlight.icao24.toUpperCase()}</span>
-                  </div>  </div>
+                  </div>
                </div>
              </div>
           </div>
         )}
-
       </div>
       </div>
 

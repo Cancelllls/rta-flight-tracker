@@ -205,6 +205,39 @@ async def fetch_flight_data():
                     highest_flight = max(valid_altitudes, key=lambda x: x["altitude"]) if valid_altitudes else None
                     fastest_flight = max(valid_velocities, key=lambda x: x["velocity"]) if valid_velocities else None
                     
+                    # Calculate flight phases
+                    climbing = sum(1 for f in processed if not f["on_ground"] and f["vertical_rate"] > 1.5)
+                    descending = sum(1 for f in processed if not f["on_ground"] and f["vertical_rate"] < -1.5)
+                    cruising = sum(1 for f in processed if not f["on_ground"] and -1.5 <= f["vertical_rate"] <= 1.5)
+                    ground = sum(1 for f in processed if f["on_ground"])
+                    
+                    # Calculate top countries
+                    from collections import Counter
+                    country_counts = Counter(f["origin_country"] for f in processed if f["origin_country"])
+                    top_countries = [{"country": k, "count": v} for k, v in country_counts.most_common(5)]
+                    
+                    # Calculate radar networks
+                    adsb = sum(1 for f in processed if f.get("position_source") == 0)
+                    asterix = sum(1 for f in processed if f.get("position_source") == 1)
+                    mlat = sum(1 for f in processed if f.get("position_source") == 2)
+                    flarm = sum(1 for f in processed if f.get("position_source") == 3)
+                    
+                    # Calculate top airlines
+                    airline_map = {
+                        "AAL": "American", "DAL": "Delta", "UAL": "United",
+                        "SWA": "Southwest", "RYR": "Ryanair", "UAE": "Emirates",
+                        "AFR": "Air France", "BAW": "British Airways", "DLH": "Lufthansa",
+                        "KLM": "KLM", "FDX": "FedEx", "UPS": "UPS", "QFA": "Qantas",
+                        "ACA": "Air Canada", "JBU": "JetBlue", "ASA": "Alaska Airlines",
+                        "THY": "Turkish Airlines", "QTR": "Qatar Airways", "CPA": "Cathay",
+                        "SIA": "Singapore", "ANA": "ANA", "JAL": "Japan Airlines",
+                        "EZY": "easyJet", "WZZ": "Wizz Air", "IGO": "IndiGo"
+                    }
+                    
+                    airline_codes = [f["callsign"][:3] for f in processed if f.get("callsign") and len(f["callsign"]) >= 3 and f["callsign"][:3].isalpha()]
+                    airline_counts = Counter(airline_codes)
+                    top_airlines = [{"airline": airline_map.get(k, k), "count": v} for k, v in airline_counts.most_common(5)]
+                    
                     # --- DATA DECIMATION ENGINE ---
                     guaranteed_icao = {f["icao24"] for f in emergencies}
                     if highest_flight: guaranteed_icao.add(highest_flight["icao24"])
@@ -227,7 +260,21 @@ async def fetch_flight_data():
                         "emergencies": emergencies,
                         "stats": {
                             "highest": highest_flight,
-                            "fastest": fastest_flight
+                            "fastest": fastest_flight,
+                            "phases": {
+                                "climbing": climbing,
+                                "descending": descending,
+                                "cruising": cruising,
+                                "ground": ground
+                            },
+                            "top_countries": top_countries,
+                            "radar_networks": {
+                                "adsb": adsb,
+                                "asterix": asterix,
+                                "mlat": mlat,
+                                "flarm": flarm
+                            },
+                            "top_airlines": top_airlines
                         },
                         "flights": final_flights
                     }
