@@ -61,8 +61,9 @@ function App() {
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.port === '5173' ? `${window.location.hostname}:9876/ws` : `${window.location.host}/ws`;
-    const ws = new WebSocket(`${protocol}//${wsHost}`);
+    // Use the actual Traefik host (e.g. rta.cancellls.com) so the Nginx proxy_pass works
+    const wsHost = window.location.port === '5173' ? 'localhost:9876' : window.location.host;
+    const ws = new WebSocket(`${protocol}//${wsHost}/ws`);
 
     ws.onopen = () => setConnected(true);
     ws.onclose = () => setConnected(false);
