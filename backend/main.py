@@ -43,15 +43,8 @@ async def fetch_flight_data():
         while True:
             if manager.active_connections:
                 try:
-                    # Bounding box for Europe/US or globally. Global is huge, let's limit to a bounding box for performance.
-                    # Bounding box covering contiguous USA: lamin=24.396308&lomin=-124.848974&lamax=49.384358&lomax=-66.93457
-                    params = {
-                        "lamin": 24.39,
-                        "lomin": -124.84,
-                        "lamax": 49.38,
-                        "lomax": -66.93
-                    }
-                    response = await client.get(OPENSKY_URL, params=params, timeout=10.0)
+                    # Fetch Global Data (No bounding box)
+                    response = await client.get(OPENSKY_URL, timeout=15.0)
                     if response.status_code == 200:
                         data = response.json()
                         states = data.get("states", [])
@@ -67,31 +60,45 @@ async def fetch_flight_data():
                                     "origin_country": s[2],
                                     "longitude": s[5],
                                     "latitude": s[6],
-                                    "altitude": s[7], # Baro altitude
-                                    "velocity": s[9],
-                                    "true_track": s[10], # Heading
-                                    "squawk": s[14]
+                                    "altitude": s[7] or 0,
+                                    "velocity": s[9] or 0,
+                                    "true_track": s[10] or 0,
+                                    "squawk": str(s[14]) if s[14] is not None else ""
                                 }
                                 processed.append(flight_data)
                         
-                        # Detect anomalies
+                        # Detect anomalies globally
                         emergencies = [f for f in processed if f["squawk"] in ["7700", "7600", "7500"]]
                         
-                        # Calculate highest altitude and fastest flight
-                        valid_altitudes = [f for f in processed if f["altitude"] is not None]
-                        valid_velocities = [f for f in processed if f["velocity"] is not None]
+                        # Calculate highest altitude and fastest flight globally
+                        valid_altitudes = [f for f in processed if f["altitude"]]
+                        valid_velocities = [f for f in processed if f["velocity"]]
                         
                         highest_flight = max(valid_altitudes, key=lambda x: x["altitude"]) if valid_altitudes else None
                         fastest_flight = max(valid_velocities, key=lambda x: x["velocity"]) if valid_velocities else None
                         
+                        # --- DATA DECIMATION ENGINE ---
+                        # Rendering 15,000 global flights crashes most browsers.
+                        # We calculate stats on ALL 15k, but only send ~1,000 to the UI.
+                        guaranteed_icao = {f["icao24"] for f in emergencies}
+                        if highest_flight: guaranteed_icao.add(highest_flight["icao24"])
+                        if fastest_flight: guaranteed_icao.add(fastest_flight["icao24"])
+                        
+                        guaranteed_flights = [f for f in processed if f["icao24"] in guaranteed_icao]
+                        other_flights = [f for f in processed if f["icao24"] not in guaranteed_icao]
+                        
+                        import random
+                        sampled_others = random.sample(other_flights, min(1000 - len(guaranteed_flights), len(other_flights)))
+                        final_flights = guaranteed_flights + sampled_others
+                        
                         payload = {
-                            "total_flights": len(processed),
+                            "total_flights": len(processed), # The true global count
                             "emergencies": emergencies,
                             "stats": {
                                 "highest": highest_flight,
                                 "fastest": fastest_flight
                             },
-                            "flights": processed
+                            "flights": final_flights
                         }
                         
                         await manager.broadcast(payload)
