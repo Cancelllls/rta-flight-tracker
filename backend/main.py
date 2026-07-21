@@ -61,6 +61,26 @@ def init_mock_flights():
 
 def update_mock_flights():
     init_mock_flights()
+    
+    # Simulate planes landing / exiting airspace
+    for _ in range(random.randint(20, 80)):
+        if mock_flights:
+            mock_flights.pop(random.randint(0, len(mock_flights)-1))
+            
+    # Simulate planes taking off
+    for _ in range(random.randint(20, 80)):
+        mock_flights.append({
+            "icao24": uuid.uuid4().hex[:6].upper(),
+            "callsign": f"SIM{random.randint(100, 9999)}",
+            "origin_country": random.choice(["United States", "Germany", "Japan", "Brazil", "Australia"]),
+            "longitude": random.uniform(-180, 180),
+            "latitude": random.uniform(-80, 80),
+            "altitude": random.uniform(5000, 13500), # Altitude naturally fluctuates
+            "velocity": random.uniform(200, 295), # Up to 1062 km/h
+            "true_track": random.uniform(0, 360),
+            "squawk": "1200" if random.random() > 0.005 else random.choice(["7700", "7600", "7500"])
+        })
+        
     for f in mock_flights:
         # Move planes based on their real velocity and heading for 10 seconds
         distance_m = f["velocity"] * 10
