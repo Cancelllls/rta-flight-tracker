@@ -284,20 +284,12 @@ function App() {
                    <span className="font-mono font-bold text-purple-100">{Math.round(selectedFlight.altitude)} m</span>
                  </div>
 
-                 {/* Manifest Info (Radar Only) */}
-                 <div className="bg-[#111] border border-[#222] rounded-2xl p-3 space-y-2">
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Route</span>
-                     <span className="text-[10px] font-bold text-gray-600 bg-[#222] px-2 py-0.5 rounded">RADAR ONLY</span>
+                 <div className="bg-[#111] border border-[#222] rounded-2xl p-3 flex justify-between items-center">
+                   <div className="flex items-center gap-2">
+                     <Navigation size={14} className="text-blue-400" />
+                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Track</span>
                    </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Takeoff</span>
-                     <span className="text-[10px] font-bold text-gray-600 bg-[#222] px-2 py-0.5 rounded">UNAVAILABLE</span>
-                   </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">ETA</span>
-                     <span className="text-[10px] font-bold text-gray-600 bg-[#222] px-2 py-0.5 rounded">UNKNOWN</span>
-                   </div>
+                   <span className="font-mono font-bold text-blue-100">{Math.round(selectedFlight.true_track)}°</span>
                  </div>
 
                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#222]">

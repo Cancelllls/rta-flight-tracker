@@ -86,9 +86,15 @@ async def fetch_flight_data():
                         
                         guaranteed_flights = [f for f in processed if f["icao24"] in guaranteed_icao]
                         other_flights = [f for f in processed if f["icao24"] not in guaranteed_icao]
+                        import hashlib
                         
-                        import random
-                        sampled_others = random.sample(other_flights, min(1000 - len(guaranteed_flights), len(other_flights)))
+                        def get_stable_id(f):
+                            # Stable hash allows us to consistently pick the exact same flights globally
+                            # without geographical bias, completely eliminating map flickering.
+                            return int(hashlib.md5(f["icao24"].encode()).hexdigest(), 16)
+                            
+                        other_flights.sort(key=get_stable_id)
+                        sampled_others = other_flights[:min(1000 - len(guaranteed_flights), len(other_flights))]
                         final_flights = guaranteed_flights + sampled_others
                         
                         payload = {
