@@ -102,31 +102,36 @@ async def fetch_flight_data():
         while True:
             if manager.active_connections:
                 try:
-                    # Fetch Global Data (No bounding box)
-                    response = await client.get(OPENSKY_URL, timeout=15.0)
-                    if response.status_code == 200:
-                        data = response.json()
-                        states = data.get("states", [])
-                        
-                        # Process and map data
-                        processed = []
-                        for s in (states or []):
-                            # Ensure we have valid lat/lon
-                            if s[5] is not None and s[6] is not None:
-                                flight_data = {
-                                    "icao24": s[0],
-                                    "callsign": s[1].strip() if s[1] else "UNKNOWN",
-                                    "origin_country": s[2],
-                                    "longitude": s[5],
-                                    "latitude": s[6],
-                                    "altitude": s[7] or 0,
-                                    "velocity": s[9] or 0,
-                                    "true_track": s[10] or 0,
-                                    "squawk": str(s[14]) if s[14] is not None else ""
-                                }
-                                processed.append(flight_data)
-                    else:
-                        # HTTP 429 (Rate Limited) or other error -> Fallback to Simulation Engine
+                    is_simulated = False
+                    try:
+                        # Fetch Global Data (No bounding box)
+                        response = await client.get(OPENSKY_URL, timeout=15.0)
+                        if response.status_code == 200:
+                            data = response.json()
+                            states = data.get("states", [])
+                            
+                            # Process and map data
+                            processed = []
+                            for s in (states or []):
+                                if s[5] is not None and s[6] is not None:
+                                    flight_data = {
+                                        "icao24": s[0],
+                                        "callsign": s[1].strip() if s[1] else "UNKNOWN",
+                                        "origin_country": s[2],
+                                        "longitude": s[5],
+                                        "latitude": s[6],
+                                        "altitude": s[7] or 0,
+                                        "velocity": s[9] or 0,
+                                        "true_track": s[10] or 0,
+                                        "squawk": str(s[14]) if s[14] is not None else ""
+                                    }
+                                    processed.append(flight_data)
+                        else:
+                            is_simulated = True
+                            processed = update_mock_flights()
+                    except Exception as req_e:
+                        print(f"Request Error: {req_e}")
+                        is_simulated = True
                         processed = update_mock_flights()
                         
                     # Detect anomalies globally
@@ -140,8 +145,6 @@ async def fetch_flight_data():
                     fastest_flight = max(valid_velocities, key=lambda x: x["velocity"]) if valid_velocities else None
                     
                     # --- DATA DECIMATION ENGINE ---
-                    # Rendering 15,000 global flights crashes most browsers.
-                    # We calculate stats on ALL 15k, but only send ~1,000 to the UI.
                     guaranteed_icao = {f["icao24"] for f in emergencies}
                     if highest_flight: guaranteed_icao.add(highest_flight["icao24"])
                     if fastest_flight: guaranteed_icao.add(fastest_flight["icao24"])
@@ -151,8 +154,6 @@ async def fetch_flight_data():
                     import hashlib
                     
                     def get_stable_id(f):
-                        # Stable hash allows us to consistently pick the exact same flights globally
-                        # without geographical bias, completely eliminating map flickering.
                         return int(hashlib.md5(f["icao24"].encode()).hexdigest(), 16)
                         
                     other_flights.sort(key=get_stable_id)
@@ -160,6 +161,7 @@ async def fetch_flight_data():
                     final_flights = guaranteed_flights + sampled_others
                     
                     payload = {
+                        "is_simulated": is_simulated,
                         "total_flights": len(processed), # The true global count
                         "emergencies": emergencies,
                         "stats": {
@@ -171,9 +173,7 @@ async def fetch_flight_data():
                     
                     await manager.broadcast(payload)
                 except Exception as e:
-                    print(f"Error fetching data: {e}")
-                    # Fallback on exception (e.g. timeout)
-                    processed = update_mock_flights()
+                    print(f"Critical Error in main loop: {e}")
             
             # Update frequency
             await asyncio.sleep(10)

@@ -29,6 +29,7 @@ interface Flight {
 }
 
 interface FlightData {
+  is_simulated?: boolean;
   total_flights: number;
   emergencies: Flight[];
   stats: {
@@ -308,55 +309,37 @@ function App() {
       {/* Live Telemetry Marquee */}
       <div className="h-8 bg-[#111] border-t border-[#222] flex items-center overflow-hidden shrink-0 w-full relative z-30 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.5)]">
         <div className="animate-marquee flex items-center gap-12 font-mono text-[10px] uppercase font-bold text-blue-500/80">
-          <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
-          <span>&gt;&gt;&gt;</span>
-          <span>GLOBAL DATA LINK: SECURE</span>
-          <span>&gt;&gt;&gt;</span>
-          <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
-          <span>&gt;&gt;&gt;</span>
-          {data.emergencies.length > 0 ? (
-            <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
-          ) : (
-            <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
-          )}
-          <span>&gt;&gt;&gt;</span>
-          <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
-          <span>&gt;&gt;&gt;</span>
-          <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
-          <span>&gt;&gt;&gt;</span>
-          {/* Duplicate content to ensure seamless loop */}
-          <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
-          <span>&gt;&gt;&gt;</span>
-          <span>GLOBAL DATA LINK: SECURE</span>
-          <span>&gt;&gt;&gt;</span>
-          <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
-          <span>&gt;&gt;&gt;</span>
-          {data.emergencies.length > 0 ? (
-            <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
-          ) : (
-            <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
-          )}
-          <span>&gt;&gt;&gt;</span>
-          <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
-          <span>&gt;&gt;&gt;</span>
-          <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
-          <span>&gt;&gt;&gt;</span>
-          {/* Triple duplicate content for ultra wide screens */}
-          <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
-          <span>&gt;&gt;&gt;</span>
-          <span>GLOBAL DATA LINK: SECURE</span>
-          <span>&gt;&gt;&gt;</span>
-          <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
-          <span>&gt;&gt;&gt;</span>
-          {data.emergencies.length > 0 ? (
-            <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
-          ) : (
-            <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
-          )}
-          <span>&gt;&gt;&gt;</span>
-          <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
-          <span>&gt;&gt;&gt;</span>
-          <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
+          
+          {/* Ticker Content Chunk */}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-12 shrink-0">
+              {data.is_simulated ? (
+                <span className="flex items-center gap-2 text-amber-500"><AlertTriangle size={10} className="animate-pulse" /> API RATE LIMIT EXCEEDED - OFFLINE SIMULATION ENGAGED</span>
+              ) : (
+                <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
+              )}
+              <span>&gt;&gt;&gt;</span>
+              {data.is_simulated ? (
+                <span className="text-amber-500/70">GLOBAL DATA LINK: OFFLINE</span>
+              ) : (
+                <span>GLOBAL DATA LINK: SECURE</span>
+              )}
+              <span>&gt;&gt;&gt;</span>
+              <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
+              <span>&gt;&gt;&gt;</span>
+              {data.emergencies.length > 0 ? (
+                <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
+              ) : (
+                <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
+              )}
+              <span>&gt;&gt;&gt;</span>
+              <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
+              <span>&gt;&gt;&gt;</span>
+              <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
+              <span>&gt;&gt;&gt;</span>
+            </div>
+          ))}
+
         </div>
       </div>
     </div>
