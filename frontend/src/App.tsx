@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Plane, AlertTriangle, Activity, Mountain, Gauge, X, Crosshair } from 'lucide-react';
+import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair } from 'lucide-react';
 
 const planeSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}">
@@ -84,7 +84,8 @@ function App() {
   }, [selectedFlight]);
 
   return (
-    <div className="relative w-full h-screen bg-[#0a0a0a] font-sans text-slate-100 overflow-hidden flex">
+    <div className="relative w-full h-screen bg-[#0a0a0a] font-sans text-slate-100 overflow-hidden flex flex-col">
+      <div className="flex-1 flex overflow-hidden">
       {/* Sidebar - Left */}
       <div className="w-96 h-full bg-[#111]/80 backdrop-blur-xl border-r border-[#222] z-20 flex flex-col shadow-2xl relative">
         <div className="p-6 border-b border-[#222]">
@@ -301,6 +302,62 @@ function App() {
           </div>
         )}
 
+      </div>
+      </div>
+
+      {/* Live Telemetry Marquee */}
+      <div className="h-8 bg-[#111] border-t border-[#222] flex items-center overflow-hidden shrink-0 w-full relative z-30 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.5)]">
+        <div className="animate-marquee flex items-center gap-12 font-mono text-[10px] uppercase font-bold text-blue-500/80">
+          <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
+          <span>>>></span>
+          <span>GLOBAL DATA LINK: SECURE</span>
+          <span>>>></span>
+          <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
+          <span>>>></span>
+          {data.emergencies.length > 0 ? (
+            <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
+          ) : (
+            <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
+          )}
+          <span>>>></span>
+          <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
+          <span>>>></span>
+          <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
+          <span>>>></span>
+          {/* Duplicate content to ensure seamless loop */}
+          <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
+          <span>>>></span>
+          <span>GLOBAL DATA LINK: SECURE</span>
+          <span>>>></span>
+          <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
+          <span>>>></span>
+          {data.emergencies.length > 0 ? (
+            <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
+          ) : (
+            <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
+          )}
+          <span>>>></span>
+          <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
+          <span>>>></span>
+          <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
+          <span>>>></span>
+          {/* Triple duplicate content for ultra wide screens */}
+          <span className="flex items-center gap-2 text-gray-500"><Activity size={10} className="text-emerald-500" /> SYSTEM STATUS: NOMINAL</span>
+          <span>>>></span>
+          <span>GLOBAL DATA LINK: SECURE</span>
+          <span>>>></span>
+          <span className="text-gray-300">ACTIVE TARGETS TRACKED: {data.total_flights.toLocaleString()}</span>
+          <span>>>></span>
+          {data.emergencies.length > 0 ? (
+            <span className="text-red-400 flex items-center gap-2"><AlertTriangle size={10} className="animate-pulse" /> {data.emergencies.length} EMERGENCY SQUAWKS DETECTED IN AIRSPACE</span>
+          ) : (
+            <span className="text-gray-500">NO ACTIVE EMERGENCIES DETECTED</span>
+          )}
+          <span>>>></span>
+          <span>PEAK FLIGHT ALTITUDE: {data.stats.highest ? Math.round(data.stats.highest.altitude) : 0}m</span>
+          <span>>>></span>
+          <span>MAX VELOCITY DETECTED: {data.stats.fastest ? Math.round(data.stats.fastest.velocity * 3.6) : 0} km/h</span>
+        </div>
       </div>
     </div>
   );
