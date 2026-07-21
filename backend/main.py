@@ -119,8 +119,8 @@ def update_mock_flights():
         })
         
     for f in mock_flights:
-        # Move planes based on their real velocity and heading for 10 seconds
-        distance_m = f["velocity"] * 10
+        # Move planes based on their real velocity and heading for 3 seconds (matched to WS poll rate)
+        distance_m = f["velocity"] * 3
         dist_deg = distance_m / 111000.0
         rad = math.radians(f["true_track"])
         f["latitude"] += math.cos(rad) * dist_deg
@@ -222,8 +222,8 @@ async def fetch_flight_data():
                 except Exception as e:
                     print(f"Critical Error in main loop: {e}")
             
-            # Update frequency
-            await asyncio.sleep(10)
+            # Update frequency (hyper-fast 3s tick rate)
+            await asyncio.sleep(3)
 
 @app.on_event("startup")
 async def startup_event():
