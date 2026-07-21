@@ -6,6 +6,8 @@ from typing import List
 import math
 import uuid
 import random
+import json
+import os
 
 app = FastAPI(title="Flight Tracker RTA")
 
@@ -242,3 +244,39 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/")
 def health_check():
     return {"status": "ok", "message": "Flight Tracker RTA Backend Running"}
+
+# Load airports db into memory
+AIRPORTS_DB = {}
+try:
+    with open("airports.json", "r") as f:
+        AIRPORTS_DB = json.load(f)
+except Exception as e:
+    print("Warning: Could not load airports.json", e)
+
+@app.get("/api/route/{callsign}")
+async def get_flight_route(callsign: str):
+    """Fetches the origin and destination of a specific flight callsign"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"https://opensky-network.org/api/routes?callsign={callsign}", timeout=5.0)
+            if response.status_code == 200:
+                data = response.json()
+                route = data.get("route", [])
+                if len(route) >= 2:
+                    origin_icao = route[0]
+                    dest_icao = route[-1]
+                    
+                    origin_airport = AIRPORTS_DB.get(origin_icao, {})
+                    dest_airport = AIRPORTS_DB.get(dest_icao, {})
+                    
+                    origin_str = origin_airport.get("city", origin_icao)
+                    if origin_airport.get("iata"): origin_str += f" ({origin_airport['iata']})"
+                    
+                    dest_str = dest_airport.get("city", dest_icao)
+                    if dest_airport.get("iata"): dest_str += f" ({dest_airport['iata']})"
+                    
+                    return {"origin": origin_str, "destination": dest_str}
+    except Exception as e:
+        print(f"Error fetching route for {callsign}: {e}")
+        
+    return {"origin": "Unknown", "destination": "Unknown"}

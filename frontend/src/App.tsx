@@ -58,6 +58,29 @@ function App() {
   });
   const [connected, setConnected] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<{origin: string, destination: string} | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  // Fetch route when a new flight is selected
+  useEffect(() => {
+    if (selectedFlight && selectedFlight.callsign && selectedFlight.callsign !== "UNKNOWN") {
+      setRouteLoading(true);
+      fetch(`/api/route/${selectedFlight.callsign}`)
+        .then(res => res.json())
+        .then(data => {
+          setSelectedRoute(data);
+          setRouteLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to fetch route", err);
+          setSelectedRoute(null);
+          setRouteLoading(false);
+        });
+    } else {
+      setSelectedRoute(null);
+      setRouteLoading(false);
+    }
+  }, [selectedFlight?.callsign]);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -253,6 +276,28 @@ function App() {
                  >
                    <X size={16} />
                  </button>
+               </div>
+
+               {/* Route Info */}
+               <div className="mb-4 bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border border-[#2a2a2a] rounded-2xl p-4 shadow-inner">
+                 <div className="flex items-center justify-between">
+                   <div className="text-center flex-1 overflow-hidden">
+                     <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1.5">Origin</p>
+                     <p className="font-mono text-xs font-bold text-gray-300 truncate px-1">
+                       {routeLoading ? "..." : (selectedRoute?.origin || "Unknown")}
+                     </p>
+                   </div>
+                   <div className="px-3 flex flex-col items-center justify-center">
+                     <div className="h-[1px] w-8 bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-1"></div>
+                     <Plane size={12} className="text-blue-500/70" />
+                   </div>
+                   <div className="text-center flex-1 overflow-hidden">
+                     <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1.5">Destination</p>
+                     <p className="font-mono text-xs font-bold text-gray-300 truncate px-1">
+                       {routeLoading ? "..." : (selectedRoute?.destination || "Unknown")}
+                     </p>
+                   </div>
+                 </div>
                </div>
 
                {/* Emergency Banner */}
