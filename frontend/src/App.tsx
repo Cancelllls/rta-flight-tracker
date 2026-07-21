@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair } from 'lucide-react';
+import { Plane, AlertTriangle, Activity, Mountain, Gauge, X, Crosshair } from 'lucide-react';
 
 const planeSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}">
