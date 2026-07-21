@@ -18,6 +18,43 @@ app.add_middleware(
 )
 
 OPENSKY_URL = "https://opensky-network.org/api/states/all"
+OPENSKY_AUTH_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+
+CLIENT_ID = "cancellls-api-client"
+CLIENT_SECRET = "IIK7MQDvxugLeyn7y1zYn4rT2Adh7xST"
+
+class TokenManager:
+    def __init__(self):
+        self.token = None
+        self.lock = asyncio.Lock()
+
+    async def get_token(self, force_refresh=False):
+        async with self.lock:
+            if self.token and not force_refresh:
+                return self.token
+                
+            async with httpx.AsyncClient() as client:
+                try:
+                    res = await client.post(
+                        OPENSKY_AUTH_URL,
+                        data={
+                            "grant_type": "client_credentials",
+                            "client_id": CLIENT_ID,
+                            "client_secret": CLIENT_SECRET
+                        },
+                        headers={"Content-Type": "application/x-www-form-urlencoded"}
+                    )
+                    if res.status_code == 200:
+                        self.token = res.json().get("access_token")
+                        print("Successfully authenticated with OpenSky OAuth2!")
+                        return self.token
+                    else:
+                        print(f"Failed to fetch token: {res.status_code} {res.text}")
+                except Exception as e:
+                    print(f"Auth error: {e}")
+            return None
+
+token_manager = TokenManager()
 
 class ConnectionManager:
     def __init__(self):
@@ -104,8 +141,18 @@ async def fetch_flight_data():
                 try:
                     is_simulated = False
                     try:
+                        token = await token_manager.get_token()
+                        headers = {"Authorization": f"Bearer {token}"} if token else {}
+                        
                         # Fetch Global Data (No bounding box)
-                        response = await client.get(OPENSKY_URL, timeout=15.0)
+                        response = await client.get(OPENSKY_URL, headers=headers, timeout=15.0)
+                        
+                        if response.status_code == 401:
+                            # Token expired, refresh and retry
+                            token = await token_manager.get_token(force_refresh=True)
+                            headers = {"Authorization": f"Bearer {token}"} if token else {}
+                            response = await client.get(OPENSKY_URL, headers=headers, timeout=15.0)
+
                         if response.status_code == 200:
                             data = response.json()
                             states = data.get("states", [])
