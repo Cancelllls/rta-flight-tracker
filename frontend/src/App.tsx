@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair, ArrowUp, ArrowDown, Radio, BarChart3, Globe, Radar, Briefcase } from 'lucide-react';
+import { Plane, AlertTriangle, Activity, Navigation, Mountain, Gauge, X, Crosshair, ArrowUp, ArrowDown, Radio, BarChart3, Globe, Radar, Briefcase, Menu } from 'lucide-react';
 
 const planeSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}">
@@ -85,6 +85,7 @@ function App() {
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<{origin: string, destination: string} | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Fetch route when a new flight is selected
   useEffect(() => {
@@ -135,9 +136,17 @@ function App() {
 
   return (
     <div className="relative w-full h-screen bg-[#0a0a0a] font-sans text-slate-100 overflow-hidden flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Left */}
-      <div className="w-96 h-full bg-[#111]/80 backdrop-blur-xl border-r border-[#222] z-20 flex flex-col shadow-2xl relative">
+      <div className={`fixed md:relative top-0 left-0 h-full w-[85%] max-w-sm md:w-96 bg-[#111]/95 md:bg-[#111]/80 backdrop-blur-xl border-r border-[#222] z-50 md:z-20 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-6 border-b border-[#222]">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -150,9 +159,17 @@ function App() {
                 Flight View
               </h1>
             </div>
-            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest ${connected ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-              <Activity size={12} className={connected ? "animate-pulse" : ""} />
-              {connected ? "LIVE" : "OFFLINE"}
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest ${connected ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                <Activity size={12} className={connected ? "animate-pulse" : ""} />
+                {connected ? "LIVE" : "OFFLINE"}
+              </div>
+              <button 
+                className="md:hidden p-1.5 text-gray-400 hover:text-white rounded-full bg-[#222] hover:bg-[#333] transition-colors"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <X size={16} />
+              </button>
             </div>
           </div>
           <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">Global Airspace Monitoring</p>
@@ -172,7 +189,12 @@ function App() {
           {/* Grid Stats */}
           <div className="grid grid-cols-2 gap-4">
             <div 
-              onClick={() => data.stats.highest && setSelectedFlight(data.stats.highest)}
+              onClick={() => {
+                if (data.stats.highest) {
+                  setSelectedFlight(data.stats.highest);
+                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                }
+              }}
               className="bg-[#111] border border-[#222] hover:border-purple-500/50 cursor-pointer transition-all hover:-translate-y-1 shadow-lg p-4 rounded-3xl flex flex-col group"
             >
               <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center mb-3">
@@ -183,7 +205,12 @@ function App() {
             </div>
 
             <div 
-              onClick={() => data.stats.fastest && setSelectedFlight(data.stats.fastest)}
+              onClick={() => {
+                if (data.stats.fastest) {
+                  setSelectedFlight(data.stats.fastest);
+                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                }
+              }}
               className="bg-[#111] border border-[#222] hover:border-blue-500/50 cursor-pointer transition-all hover:-translate-y-1 shadow-lg p-4 rounded-3xl flex flex-col group"
             >
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
@@ -314,7 +341,10 @@ function App() {
                   {data.emergencies.map(e => (
                     <div 
                       key={e.icao24} 
-                      onClick={() => setSelectedFlight(e)}
+                      onClick={() => {
+                        setSelectedFlight(e);
+                        if (window.innerWidth < 768) setIsSidebarOpen(false);
+                      }}
                       className="group flex items-center justify-between p-3 bg-red-950/60 border border-red-900/50 rounded-2xl cursor-pointer hover:bg-red-900/40 transition-colors"
                     >
                       <div>
@@ -339,6 +369,14 @@ function App() {
 
       {/* Map Container */}
       <div className="flex-1 relative bg-[#0a0a0a]">
+        {/* Mobile Menu Toggle Button */}
+        <button 
+          className="md:hidden absolute top-4 left-4 z-30 p-2.5 bg-[#111]/90 rounded-xl border border-[#222] shadow-xl text-white backdrop-blur-xl hover:bg-[#222] transition-colors"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <Menu size={20} />
+        </button>
+
         <MapContainer 
           center={[39.8283, -98.5795]} 
           zoom={5} 
@@ -387,8 +425,8 @@ function App() {
 
         {/* Selected Flight Floating Panel */}
         {selectedFlight && (
-          <div className="absolute top-6 right-6 z-20 w-80 bg-[#111]/90 backdrop-blur-2xl border border-blue-500/30 p-1 rounded-3xl shadow-2xl shadow-blue-500/20 animate-in fade-in slide-in-from-right-4 duration-300">
-             <div className="bg-[#0a0a0a]/50 rounded-2xl p-5">
+          <div className="absolute bottom-12 md:bottom-auto md:top-6 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-6 z-40 w-[calc(100%-2rem)] md:w-80 bg-[#111]/95 md:bg-[#111]/90 backdrop-blur-2xl border border-blue-500/30 p-1 rounded-3xl shadow-2xl shadow-blue-500/20 animate-in fade-in md:slide-in-from-right-4 duration-300">
+             <div className="bg-[#0a0a0a]/80 md:bg-[#0a0a0a]/50 rounded-2xl p-4 md:p-5 max-h-[60vh] md:max-h-none overflow-y-auto custom-scrollbar">
                <div className="flex items-start justify-between mb-4">
                  <div>
                    <div className="flex items-center gap-2 mb-1">
